@@ -34,6 +34,8 @@ class ImageViewController: UIViewController , UIScrollViewDelegate{
 //        }
     }
     
+    @IBOutlet weak var spinner: UIActivityIndicatorView!
+    
     @IBOutlet weak var scrollView: UIScrollView! {
         didSet {
             scrollView.maximumZoomScale = 1 / 25
@@ -42,7 +44,7 @@ class ImageViewController: UIViewController , UIScrollViewDelegate{
             scrollView.addSubview(imageView)
         }
     }
-    var imageView: UIImageView!
+    var imageView = UIImageView()
     
     func viewForZooming(in scrollView: UIScrollView) -> UIView? {
         return imageView
@@ -55,15 +57,21 @@ class ImageViewController: UIViewController , UIScrollViewDelegate{
         set {
             imageView.image = newValue
             imageView.sizeToFit()
-            scrollView.contentSize = imageView.frame.size
+            scrollView?.contentSize = imageView.frame.size
+            spinner?.stopAnimating()
         }
     }
     
     private func fetchImage() {
         if let url = imageURL {
-            let urlContents = try? Data(contentsOf: url)
-            if let imageData = urlContents {
-                image = UIImage(data: imageData)
+            spinner.startAnimating()
+            DispatchQueue.global(qos: .userInteractive).async { [weak self] in
+                let urlContents = try? Data(contentsOf: url)
+                DispatchQueue.main.async {
+                    if let imageData = urlContents, url == self?.imageURL {
+                        self?.image = UIImage(data: imageData)
+                    }
+                }
             }
         }
         
